@@ -8,6 +8,8 @@ import time
 from multiprocessing import Process
 import urllib.request
 import random
+import string
+import os
 
 
 client = commands.Bot(command_prefix = '!')
@@ -25,34 +27,41 @@ def submitPost(cid, key, username, password, agent, info):
 
     sub = info['sub']
     title = info['title']
-    text = info['text']
 
     reddit = praw.Reddit(client_id=cid, client_secret=key, username=username, password=password,  user_agent=agent)
 
     subreddit = reddit.subreddit(sub)
-    subreddit.submit(title, selftext=text)
 
-# Function to submit custom pictures
-def submitPics(cid, key, username, password, agent, info):
+    if "url" in info:
+        link = info['url']
+        subreddit.submit(title, url=link)
+    else:
+        text = info['text']
+        subreddit.submit(title, selftext=text)
 
-    sub = info['sub']
-    title = info['title']
-    link = info['link']
 
-    # Create random string
-    randomString = output_string = ''.join(random.SystemRandom().choice(string.ascii_letters + string.digits) for _ in range(10))
+# This function is obsolete by the 'url' option in the submitPost function
+## Function to submit custom pictures
+#def submitPics(cid, key, username, password, agent, info):
 
-    # Pretend like we're a normal user and not a bot
-    opener=urllib.request.build_opener()
-    opener.addheaders=[('User-Agent','Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/36.0.1941.0 Safari/537.36')]
-    urllib.request.install_opener(opener)
+    #sub = info['sub']
+    #title = info['title']
+    #link = info['link']
 
-    urllib.request.urlretrieve(link, filename="pictures/{rand}.jpg".format(randomString))
+    ## Create random string
+    #randomString = output_string = ''.join(random.SystemRandom().choice(string.ascii_letters + string.digits) for _ in range(10))
 
-    reddit = praw.Reddit(client_id=cid, client_secret=key, username=username, password=password,  user_agent=agent)
+    ## Pretend like we're a normal user and not a bot
+    #opener=urllib.request.build_opener()
+    #opener.addheaders=[('User-Agent','Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/36.0.1941.0 Safari/537.36')]
+    #urllib.request.install_opener(opener)
 
-    subreddit = reddit.subreddit(sub)
-    subreddit.submit_image(title, image_path='pictures/{rand}.jpg'.format(randomString))
+    #urllib.request.urlretrieve(link, filename="pictures/{nameofpic}.jpg".format(nameofpic = randomString))
+
+    #reddit = praw.Reddit(client_id=cid, client_secret=key, username=username, password=password,  user_agent=agent)
+
+    #subreddit = reddit.subreddit(sub)
+    #subreddit.submit_image(title, image_path='pictures/{nameofpic}.jpg'.format(nameofpic = randomString))
 
 # Function to autosubmit posts at certain time
 def autoPost(cid, key, username, password, agent, flag, info):
@@ -83,8 +92,8 @@ async def on_ready():
 # Function to detect commands
 @client.event
 async def on_message(message):
-    if message.content[:12] == "redditsubmit":
-        await message.channel.send('Recieved but no action')
+    if message.content[:12] == "commandslist":
+        await message.channel.send('customredditsubmit, autoredditsubmit on, autoredditsubmit off. Use ?<command> for help on specific command')
 
     elif message.content[:18] == "customredditsubmit":
 
@@ -92,11 +101,11 @@ async def on_message(message):
         submitPost(client_id, secret_key, username, password, user_agent, info)
         await message.channel.send('custom post submitted')
 
-    elif message.content[:22] == "customredditsubmitpics":
+    #elif message.content[:22] == "picscustomredditsubmit":
 
-        info = ast.literal_eval(message.content[23:])
-        submitPics(client_id, secret_key, username, password, user_agent, info)
-        await message.channel.send('custom pic submitted')
+        #info = ast.literal_eval(message.content[23:])
+        #submitPics(client_id, secret_key, username, password, user_agent, info)
+        #await message.channel.send('custom pic submitted')
 
     elif message.content[:19] == "autoredditsubmit on":
         
@@ -112,10 +121,19 @@ async def on_message(message):
         await message.channel.send('autosubmit turned off')
 
     elif message.content[:19] == '?customredditsubmit':
-        await message.channel.send('To submit a custom reddit post enter \'customredditsubmit {\'sub\': \'sub name\', \'title\': \'title of post\', \'text\': \'text in post\'}\'')
+        await message.channel.send('To submit a custom reddit post enter \'customredditsubmit {\'sub\': \'sub name\', \'title\': \'title of post\', \'text\': \'text in post\'}\' You can optionally add a url key for a link post. You can only use either url or text')
 
-    elif message.content[:19] == '?customredditsubmitpics':
-        await message.channel.send('To submit a custom reddit post enter \'customredditsubmit {\'sub\': \'sub name\', \'title\': \'title of post\', \'link\': \'link here\'}\'')
+    #elif message.content[:23] == '?picscustomredditsubmit':
+        #await message.channel.send('To submit a custom reddit post enter \'picscustomredditsubmit {\'sub\': \'sub name\', \'title\': \'title of post\', \'link\': \'link here\'}\'')
+
+    #elif message.content[:9] == 'purgepics':
+
+        #filelist = os.listdir('pictures')
+        
+        #for pic in filelist:
+            #os.remove("pictures/{item}".format(item = pic))
+
+        #await message.channel.send('Pictures deleted!')
     
     elif message.content[:17] == '?autoredditsubmit':
         await message.channel.send('To auto submit a custom reddit post enter in a given time \'autoredditsubmit on {\'sub\': \'sub name\', \'title\': \'title of post\', \'text\': \'text in post\', \'day\': \'day to post\', \'hour\': \'military time\', \'minute\': \'minute\'}\'')
